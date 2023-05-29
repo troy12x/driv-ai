@@ -210,58 +210,68 @@
     // ...
 
     function signUp(event) {
-      event.preventDefault();
-      const name = document.getElementById('name').value;
-      const email = document.getElementById('email').value;
-      const password = document.getElementById('password').value;
+  event.preventDefault();
+  const name = document.getElementById('name').value;
+  const email = document.getElementById('email').value;
+  const password = document.getElementById('password').value;
 
-      // Disable signup button and show loading icon
-      const signupButton = document.getElementById('signup-btn');
-      signupButton.setAttribute('disabled', 'disabled');
-      signupButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+  // Disable signup button and show loading icon
+  const signupButton = document.getElementById('signup-btn');
+  signupButton.setAttribute('disabled', 'disabled');
+  signupButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
 
-      firebase.auth().createUserWithEmailAndPassword(email, password)
-        .then((userCredential) => {
-          const user = userCredential.user;
-          firebase.firestore().collection('users').doc(user.uid).set({
-            name: name,
-            email: email,
-            subscription: "pro"
-          })
-            .then(() => {
-              window.location.href = 'counter.html';
-            })
-            .catch((error) => {
-              // Error message
-              showPopup("Signup Error", "An error occurred during signup. Please try again later.");
-              console.error(error);
-              // Enable signup button and restore text
-              signupButton.removeAttribute('disabled');
-              signupButton.innerHTML = 'Sign up';
-            });
+  firebase.auth().createUserWithEmailAndPassword(email, password)
+    .then((userCredential) => {
+      const user = userCredential.user;
+      const uniqueId = generateUniqueId(); // Generate a unique ID
+
+      firebase.firestore().collection('users').doc(user.uid).set({
+        id: uniqueId, // Save the unique ID to the user document
+        name: name,
+        email: email,
+        subscription: "pro"
+      })
+        .then(() => {
+          const uniqueUrl = `counter.html?uid=${user.uid}`;
+          window.location.href = uniqueUrl;
         })
         .catch((error) => {
           // Error message
-          let errorMessage = "";
-          switch (error.code) {
-            case "auth/email-already-in-use":
-              errorMessage = "The email address is already registered. Please try another email.";
-              break;
-            case "auth/weak-password":
-              errorMessage = "The password is too weak. Please choose a stronger password.";
-              break;
-            default:
-              errorMessage = "An error occurred during signup. Please try again later.";
-              break;
-          }
-          showPopup("Signup Error", errorMessage);
+          showPopup("Signup Error", "An error occurred during signup. Please try again later.");
           console.error(error);
           // Enable signup button and restore text
           signupButton.removeAttribute('disabled');
           signupButton.innerHTML = 'Sign up';
         });
-    }
+    })
+    .catch((error) => {
+      // Error message
+      let errorMessage = "";
+      switch (error.code) {
+        case "auth/email-already-in-use":
+          errorMessage = "The email address is already registered. Please try another email.";
+          break;
+        case "auth/weak-password":
+          errorMessage = "The password is too weak. Please choose a stronger password.";
+          break;
+        default:
+          errorMessage = "An error occurred during signup. Please try again later.";
+          break;
+      }
+      showPopup("Signup Error", errorMessage);
+      console.error(error);
+      // Enable signup button and restore text
+      signupButton.removeAttribute('disabled');
+      signupButton.innerHTML = 'Sign up';
+    });
+}
 
+function generateUniqueId() {
+  // Generate a unique ID using a timestamp and random number
+  const timestamp = Date.now().toString();
+  const randomNumber = Math.floor(Math.random() * 10000).toString();
+  return timestamp + randomNumber;
+}
     function showPopup(title, message) {
       const popupOverlay = document.getElementById('popup-overlay');
       const popupTitle = document.getElementById('popup-title');
