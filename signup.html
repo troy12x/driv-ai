@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <link rel="stylesheet" href="./css/style.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css" integrity="sha512-KfkfwYDsLkIlwQp6LFnl8zNdLGxu9YAA1QvwINks4PhcElQSvqcyVLLD9aMhXd13uQjoXtEKNosOWaZqXgel0g==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <title>Sign up | Trivo Ai</title>
+</head>
+<body>
+
+  <style>
+    .popup-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+    }
+  
+    .popup {
+      background-color: #fff;
+      padding: 20px;
+      top: 50%;
+      left: 50%;
+      position: absolute;
+      transform: translate(-50%, -50%);
+      border-radius: 5px;
+      max-width: 400px;
+      text-align: center;
+    }
+  
+    .popup h2 {
+      font-size: 20px;
+      margin-bottom: 10px;
+    }
+  
+    .popup p {
+      margin-bottom: 20px;
+    }
+  
+    .popup button {
+      background-color: #9891ed;
+      color: #fff;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+  
+    .popup button:hover {
+      background-color: #644EFF;
+    }
+  </style>
+
+  <div class="split-screen">
+    <div class="popup-overlay" id="popup-overlay">
+      <div class="popup">
+        <h2 style="font-weight: bold;" id="popup-title"></h2>
+        <p id="popup-message"></p>
+        <button onclick="closePopup()">Continue</button>
+      </div>
+    </div>
+    <div class="left">
+      <video id="background-video" autoplay loop muted>
+        <source src="./assets/videos/video.mp4" type="video/mp4">
+      </video>
+      <section class="copy">
+        <h1>Unlock Limitless Learning with Triv</h1>
+      </section>
+    </div>
+    <div class="right">
+      <form action="" method="post" id="signup-form">
+        <div class="main-mockup"></div>
+        <section class="copy">
+          <h2>Sign Up</h2>
+        </section>
+        <div class="input-container name">
+          <label for="fname">Full name</label>
+          <input type="text" class="name" name="name" id="name" placeholder="Enter Your Name" required>
+        </div>
+
+        <div class="input-container email">
+          <label for="email">Email</label>
+          <input type="email" class="email" name="email" id="email" placeholder="Enter Your Email" required>
+        </div>
+        <div class="input-container password">
+          <label for="password">Password</label>
+          <input type="password" class="password" name="password" id="password" placeholder="Enter Your Password" required>
+        </div>
+        <div class="input-container password">
+          <label for="password">Confirm Password</label>
+          <input type="password" class="confirm-password" name="confirm-password" id="confirm-password" placeholder="Enter Your Confirm Password" required>
+        </div>
+        <div class="input-container cta"></div>
+        <div class="login-container">
+          <p>Create an account now and continue your journey seamlessly when we launch! <a href="login.html"></a></p>
+        </div>
+        <a href="index.html">
+          <button class="signup-btn" type="submit" name="submit" id="signup-btn" onclick="signUp(event)" disabled>
+            Sign up
+          </button>
+        </a>
+        <section class="copy legal" style="text-align:center">
+          <p><span class="small">By continuing, you agree to accept our <br><a href="#">Privacy Policy</a> &amp; <a href="#">Terms of Service</a></span></p>
+        </section>
+      </form>
+    </div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-firestore.js"></script>
+  <script src="firebase-config.js"></script>
+
+
+  <script>
+    // ...
+
+    function toggleSignupButton() {
+      const name = document.getElementById('name').value;
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const confirmPassword = document.getElementById('confirm-password').value;
+      const signupButton = document.getElementById('signup-btn');
+
+      if (name && email && password && confirmPassword) {
+        signupButton.removeAttribute('disabled');
+        signupButton.style.backgroundColor = '#9891ed';
+      } else {
+        signupButton.setAttribute('disabled', 'disabled');
+        signupButton.style.backgroundColor = '#644EFF';
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const inputFields = document.querySelectorAll('#signup-form input');
+      inputFields.forEach((input) => {
+        input.addEventListener('input', toggleSignupButton);
+      });
+      toggleSignupButton(); // Call the function initially to set the initial button state
+    });
+  </script>
+
+
+
+  <script>
+    // signup.js
+    const signupForm = document.getElementById('signup-form');
+
+    signupForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const name = signupForm['name'].value;
+      const email = signupForm['email'].value;
+      const password = signupForm['password'].value;
+
+      // Disable signup button and show loading icon
+      const signupButton = document.getElementById('signup-btn');
+      signupButton.setAttribute('disabled', 'disabled');
+      signupButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+      // Sign up the user with email and password
+      firebase.auth().createUserWithEmailAndPassword(email, password)
+        .then((userCredential) => {
+          // User signed up successfully
+          const user = userCredential.user;
+          // Store additional user data to the database
+          firebase.firestore().collection('users').doc(user.uid).set({
+            name: name,
+            email: email,
+            subscription: "free"
+          })
+            .then(() => {
+              // Data saved successfully
+              window.location.href = 'counter.html'; // Redirect to home page
+            })
+            .catch((error) => {
+              // Handle error while saving data
+              console.error(error);
+            });
+        })
+        .catch((error) => {
+          // Handle error while signing up
+          console.error(error);
+          // Enable signup button and restore text
+          signupButton.removeAttribute('disabled');
+          signupButton.innerHTML = 'Sign up';
+        });
+    });
+  </script>
+
+  <script src="js/jquery.min.js"></script>
+  <script>
+    $(document).ready(function (c) {
+      $('.alert-close').on('click', function (c) {
+        $('.main-mockup').fadeOut('slow', function (c) {
+          $('.main-mockup').remove();
+        });
+      });
+    });
+  </script>
+
+  <script>
+    // ...
+
+    function signUp(event) {
+      event.preventDefault();
+      const name = document.getElementById('name').value;
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+
+      // Disable signup button and show loading icon
+      const signupButton = document.getElementById('signup-btn');
+      signupButton.setAttribute('disabled', 'disabled');
+      signupButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+      firebase.auth().createUserWithEmailAndPassword(email, password)
+        .then((userCredential) => {
+          const user = userCredential.user;
+          firebase.firestore().collection('users').doc(user.uid).set({
+            name: name,
+            email: email,
+            subscription: "pro"
+          })
+            .then(() => {
+              window.location.href = 'counter.html';
+            })
+            .catch((error) => {
+              // Error message
+              showPopup("Signup Error", "An error occurred during signup. Please try again later.");
+              console.error(error);
+              // Enable signup button and restore text
+              signupButton.removeAttribute('disabled');
+              signupButton.innerHTML = 'Sign up';
+            });
+        })
+        .catch((error) => {
+          // Error message
+          let errorMessage = "";
+          switch (error.code) {
+            case "auth/email-already-in-use":
+              errorMessage = "The email address is already registered. Please try another email.";
+              break;
+            case "auth/weak-password":
+              errorMessage = "The password is too weak. Please choose a stronger password.";
+              break;
+            default:
+              errorMessage = "An error occurred during signup. Please try again later.";
+              break;
+          }
+          showPopup("Signup Error", errorMessage);
+          console.error(error);
+          // Enable signup button and restore text
+          signupButton.removeAttribute('disabled');
+          signupButton.innerHTML = 'Sign up';
+        });
+    }
+
+    function showPopup(title, message) {
+      const popupOverlay = document.getElementById('popup-overlay');
+      const popupTitle = document.getElementById('popup-title');
+      const popupMessage = document.getElementById('popup-message');
+
+      popupTitle.textContent = title;
+      popupMessage.textContent = message;
+      popupOverlay.style.display = "block";
+    }
+
+    function closePopup() {
+      const popupOverlay = document.getElementById('popup-overlay');
+      popupOverlay.style.display = "none";
+    }
+  </script>
+
+</body>
+</html>
